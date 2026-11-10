@@ -3,21 +3,19 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Transport](https://img.shields.io/badge/Transport-pure%20%7C%20hybrid%20%7C%20browser-orange)
 
-> 把 duck.ai 逆向为 OpenAI / Anthropic / Responses 兼容 API。纯 HTTP 握手，无需浏览器，毫秒级求解挑战。
+把 duck.ai 逆向为 OpenAI / Anthropic / Responses 兼容 API。纯 HTTP 握手，无需浏览器，毫秒级求解挑战。
 
 ---
 
 ## ✨ 特性
 
-| | 原版 duck2api_proxy | 本仓库 |
-|---|---|---|
-| 工具调用重试 | 纯 nudge 前缀提示 | append_tool_retry：把模型非合规回复作为 Assistant 轮次追加，自我修正 |
-| 身份管理 | 单一会话，限流后手动重启 | IdentityPool：N 个匿名身份自动轮换 + 熔断冷却 |
-| 端点 | /v1/chat/completions | chat / responses / messages / images / models |
-| 多格式 | 仅 OpenAI | OpenAI + Anthropic + Responses |
-| 多模态 | 纯文本 | text + image (data URI) |
-| WebSearch | ❌ | ✅ 字段透传 |
-| 管理 API | ❌ | /v1/admin/pool + /v1/admin/rotate |
+- **多端点** — chat/completions · responses · messages · images
+- **多格式** — OpenAI · Anthropic · Responses 统一转换
+- **工具调用模拟** — JSON envelope + append_tool_retry 自我修正
+- **匿名身份池** — N 个身份自动轮换，限流熔断
+- **多模态** — text + image (data URI)
+- **纯 HTTP 握手** — 无浏览器，挑战求解用 Node vm，几毫秒
+- **管理 API** — 身份池状态 + 手动轮换
 
 ## 🚀 快速开始
 
@@ -27,7 +25,7 @@
 pip install requests
 ```
 
-还需要 pure_handshake.py 和 solve_challenge.js（来自上游 duck2api 项目）。Node.js 用于本地求解挑战。
+还需要 `pure_handshake.py` 和 `solve_challenge.js`。Node.js 用于本地求解挑战。
 
 ### 启动
 
@@ -103,15 +101,11 @@ duck2api_pro/
 
 ### append_tool_retry（自我修正重试）
 
-duck.ai 不支持原生 tool calling。原版用 nudge 在 user 消息前加提示，但模型看不到自己之前犯错的上下文。
-
-本仓库把模型之前的非合规回复作为 Assistant 轮次插入，再追加 User 修正提示，让模型在上下文中自我纠正。
+duck.ai 不支持原生 tool calling。本仓库把模型之前的非合规回复作为 Assistant 轮次插入，再追加 User 修正提示，让模型在上下文中自我纠正。
 
 ### IdentityPool（身份轮换）
 
-duck.ai 匿名身份靠 cookie + TLS 指纹 + challenge token 三者绑定。单一身份触发限流后只能换新身份。
-
-IdentityPool 维护 N 个 PureHandshake 实例，每个独立 cookie/token。限流时自动切换，支持手动轮换和熔断。
+duck.ai 匿名身份靠 cookie + TLS 指纹 + challenge token 三者绑定。单一身份触发限流后只能换新身份。IdentityPool 维护 N 个独立实例，限流时自动切换。
 
 ### 协议约束
 
